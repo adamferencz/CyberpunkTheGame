@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>CRS.Simple example - Leaflet</title>
+
+  <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+    html,
+    body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+    }
+
+    button:hover {
+      cursor: pointer;
+    }
+
+    .leaflet-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    .head {
+      padding-top: 2%;
+      position: absolute;
+      margin: 0;
+      justify-content: start;
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 7%;
+      z-index: 1000;
+    }
+
+    #score2,
+    #score {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 500;
+      margin: 0;
+      transition: all 0.2s;
+    }
+
+    #score {
+      z-index: 1005;
+    }
+
+    #score2 {
+      position: absolute;
+      top: 2;
+      filter: blur(5px);
+      color: rgb(255, 255, 255);
+    }
+
+    #add-score {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgb(250, 250, 250);
+      margin: 0;
+      width: 155px;
+      height: 38px;
+      background-color: #de623c;
+      border: none;
+      border-radius: 5px;
+      transition: all 0.15s;
+    }
+
+    #add-score:active {
+      background-color: rgb(34, 34, 34);
+    }
+
+    #score:active {
+      color: #de623c;
+    }
+
+    .modal-conteiner {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-color: rgba(194, 194, 194, 0.397);
+      display: flex;
+      /*display: flex; ==> je to vidět. display: none; ==> není to vidět */
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+
+    @media (orientation: landscape) {
+      .modal {
+        max-width: 40%;
+      }
+
+      .modal-submit {
+        max-width: 155px;
+      }
+
+      .modal-leave {
+        max-width: 155px;
+      }
+
+      .head {
+        padding-top: 1%;
+      }
+    }
+
+    .modal {
+      width: 80%;
+      border-radius: 8px;
+      top: 0;
+      left: 20%;
+      max-height: 70%;
+      padding: 10px 0 20px 0;
+      background-color: rgb(255, 255, 255);
+      border-width: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      gap: 30px;
+    }
+
+    .modal-header {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      font-size: 26px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .modal-description {
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 0 20px 0 20px;
+      max-height: 70%;
+      overflow-y: auto;
+      margin: 0
+    }
+
+    #modal-text {
+      width: 85%;
+      height: 6%;
+      margin: 0 20px 0 20px;
+      border-color: black;
+      border-width: 1px;
+      border-style: solid;
+      border-radius: 4px;
+      padding: 3px;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .modal-text::placeholder {
+      padding: 3px;
+    }
+
+    .modal-submit {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgb(250, 250, 250);
+      margin: 0;
+      width: 40%;
+      height: 38px;
+      background-color: #de623c;
+      border: none;
+      border-radius: 5px;
+      transition: all 0.15s;
+    }
+
+    .modal-leave {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgb(250, 250, 250);
+      margin: 0;
+      width: 40%;
+      height: 38px;
+      background-color: white;
+      color: #de623c;
+      border-color: #de623c;
+      border-width: 2px;
+      border-style: solid;
+      border-radius: 5px;
+      transition: all 0.15s;
+    }
+
+    #modal-guess-text {
+      display: none;
+    }
+
+    #modal-wrong {
+      display: none;
+    }
+
+    #modal-correct {
+      display: none;
+    }
+
+    #modal-repeat {
+      display: none;
+    }
+
+    #modal-correct .modal-header {
+      color: rgb(45, 190, 40);
+    }
+
+    #modal-wrong .modal-header {
+      color: #c2342a;
+    }
+
+    #modal-repeat .modal-header {
+      color: #de623c;
+    }
+
+    .modal-buttons {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      width: 100%;
+      gap: 3%;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <input type="text" id="coords" readonly> <a>Nebojte tohle zmizí, je to jen vývojový mod.</a>
+  <p>Hesla jsou: ahoj, test1, banán35, autobus9, ghb01</p> -->
+  <div class="head">
+    <p id="score">Skóre: 0/50</p>
+    <p id="score2">Skóre: 0/50</p>
+    <button id="add-score" onclick="showAnswerModal()">Zadat kód</button>
+  </div>
+  <div id='map'></div>
+
+  <div class="modal-conteiner" id="modal-guess-text">
+    <div class="modal">
+      <p class="modal-header">Zadejte kód</p>
+      <p class="modal-description">Do pole níže zadejte kód, který jste obdrželi na jednom ze stanovišť. Pokud jste na
+        pasivním stanovišti, zadejte odpověď na otázku.</p>
+      <input type="text" name="textInput" id="modal-text" placeholder="Zde zadej svou odpověď.">
+      <div class="modal-buttons">
+        <button class="modal-submit" onclick="submitAnswer()">Potvrdit</button>
+        <button class="modal-leave" onclick="unshowOtherModals()">Zavřít</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-conteiner" id="modal-correct">
+    <div class="modal">
+      <p class="modal-header">Správná odpověď</p>
+      <p class="modal-description">Zadaná odpověď je správná. Gratulujeme. Byl vám přičten jeden bod.</p>
+      <button class="modal-submit" id="modal-correct-ok" onclick="unshowOtherModals()">Ok.</button>
+    </div>
+  </div>
+  <div class="modal-conteiner" id="modal-wrong">
+    <div class="modal">
+      <p class="modal-header">Špatná odpověď</p>
+      <p class="modal-description">Zadaná odpověď je špatně. Zkontrolujte jestli jste zadali kód správně, případně se
+        ujistěte, že zadaná odpověď je správná.</p>
+      <button class="modal-submit" id="modal-wrong-ok" onclick="unshowOtherModals()">Ok.</button>
+    </div>
+  </div>
+  <div class="modal-conteiner" id="modal-repeat">
+    <div class="modal">
+      <p class="modal-header">Použitý kód</p>
+      <p class="modal-description">Zadaný kód jste již použili. Žádné body vám nebyly přičteny nebo odečteny.</p>
+      <button class="modal-submit" id="modal-repeat-ok" onclick="unshowOtherModals()">Ok.</button>
+    </div>
+  </div>
+
+  <script>
+    let score = localStorage.getItem("score") || 0;
+    let usedAnswers = localStorage.getItem("usedAnswers") ? localStorage.getItem("usedAnswers").split(",") : [];
+    document.getElementById("score").textContent = `Skóre: ${score}/200`;
+    //ahoj, test1, banán35, autobus9, ghb01
+
+
+
+    function showAnswerModal() {
+      document.getElementById("modal-guess-text").style.display = "flex";
+      document.getElementById("modal-text").value = "";
+    }
+
+    function submitAnswer() {
+      const answer = document.getElementById("modal-text").value;
+      if (usedAnswers.includes(stringToBytes(answer))) {
+        document.getElementById("modal-guess-text").style.display = "none";
+        document.getElementById("modal-repeat").style.display = "flex";
+      } else if (answers.includes(stringToBytes(answer)) && !usedAnswers.includes(stringToBytes(answer))) {
+        document.getElementById("modal-guess-text").style.display = "none";
+        document.getElementById("modal-correct").style.display = "flex";
+        score++;
+        usedAnswers.push(stringToBytes(answer))
+        localStorage.setItem("score", score);
+        localStorage.setItem("usedAnswers", usedAnswers)
+        document.getElementById("score").textContent = `Skóre: ${score}/50`;
+      } else {
+        document.getElementById("modal-guess-text").style.display = "none";
+        document.getElementById("modal-wrong").style.display = "flex";
+      }
+    }
+
+    function unshowOtherModals() {
+      document.getElementById("modal-guess-text").style.display = "none";
+      document.getElementById("modal-correct").style.display = "none";
+      document.getElementById("modal-wrong").style.display = "none";
+      document.getElementById("modal-repeat").style.display = "none";
+    }
+
+    function stringToBytes(str) {
+      str = str.replace(/\s/g, "");
+      let bytes = [];
+      for (let i = 0; i < str.length; i++) {
+        let charCode = str.charCodeAt(i);
+        let charBytes = [];
+        do {
+          charBytes.unshift(charCode & 0xff);
+          charCode >>= 8;
+        } while (charCode);
+        bytes = bytes.concat(charBytes);
+      }
+      let tempString = "";
+      bytes.forEach((bString) => {
+        tempString = tempString.concat(bString);
+      });
+      return tempString;
+    }
+
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -5,
+      maxZoom: 1
+    });
+
+    // Set the background color of the map container
+    document.getElementById('map').style.backgroundColor = 'black';
+
+    const yx = L.latLng;
+
+    function xy(x, y) {
+      if (Array.isArray(x)) { // When doing xy([x, y]);
+        return yx(x[1], x[0]);
+      }
+      return yx(y, x); // When doing xy(x, y);
+    }
+
+    const bounds = [xy(0, 0), xy(7680, 5836)];
+    var image = L.imageOverlay('render-10.png', bounds).addTo(map);
+
+    // Load the higher-quality image in the background
+    var highQualitySrc = 'render-50.png';
+    var highQualityImage = new Image();
+
+    highQualityImage.onload = function() {
+        // Replace the low-quality image with the high-quality image
+          image.setUrl(highQualitySrc);
+    };
+
+    highQualityImage.src = highQualitySrc;
+
+    const iconSize = 50;
+    const green = L.icon({
+      iconUrl: 'green.png', // Replace with the URL of your active icon
+      iconSize: [iconSize, iconSize], // Adjust the size as needed
+      iconAnchor: [iconSize / 2, iconSize],
+    });
+
+    const blue = L.icon({
+      iconUrl: 'blue.png', // Replace with the URL of your passive icon
+      iconSize: [iconSize, iconSize], // Adjust the size as needed
+      iconAnchor: [iconSize / 2, iconSize],
+    });
+
+    const iconSizeSmall = 30;
+    const yellow = L.icon({
+      iconUrl: 'yellow.png', // Replace with the URL of your passive icon
+      iconSize: [iconSizeSmall, iconSizeSmall], // Adjust the size as needed
+      iconAnchor: [iconSizeSmall / 2, iconSizeSmall],
+    });
+
+    const pink = L.icon({
+      iconUrl: 'pink.png', // Replace with the URL of your passive icon
+      iconSize: [iconSize, iconSize], // Adjust the size as needed
+      iconAnchor: [iconSize / 2, iconSize],
+    });
+
+    const red = L.icon({
+      iconUrl: 'red.png', // Replace with the URL of your passive icon
+      iconSize: [iconSize, iconSize], // Adjust the size as needed
+      iconAnchor: [iconSize / 2, iconSize],
+    });
+
+    const purple = L.icon({
+      iconUrl: 'purple.png', // Replace with the URL of your passive icon
+      iconSize: [iconSize, iconSize], // Adjust the size as needed
+      iconAnchor: [iconSize / 2, iconSize],
+    });
+
+    //icon src
+    //https://www.canva.com/design/DAFzmKwPELU/LXITAjD7G916Yox7imPk8Q/edit?utm_content=DAFzmKwPELU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+
+    //name, x, y, icon, type, description
+    pointsArr = [["Dron go brr", 6804, 2629, "green", "simple", "description "],
+    ["První pomoc, maturitní tabla", 2872, 1099, "green", "simple", "description "],
+    ["Fyzikální „Kufr“", 5934, 3135, "green", "simple", "description "],
+    ["Fyzikální „Kufr“", 5290, 2865, "green", "simple", "description "],
+    ["Cyber fastfood", 3555, 5416, "pink", "simple", "description "],
+    ["Pěvecký sbor 15:30", 4852, 2717, "purple", "simple", "description "],
+    ["Kavárna", 4546, 2601, "pink", "simple", "description "],
+    ["Prezentace aktivit školy", 3439, 2121, "purple", "simple", "description "],
+    ["Japonská kaligrafie", 3343, 1909, "blue", "custom", "Nápovědu k tajnému heslu hledej ve výstavě na stěnách."],
+    ["Laboratoř", 3099, 1979, "green", "simple", "description "],
+    ["Laboratoř", 2707, 1503, "green", "simple", "description "],
+    ["Mikroskop", 5524, 4223, "green", "simple", "description "],
+    ["Mikroskop", 5234, 4133, "green", "simple", "description "],
+    ["Černá díra", 4858, 3987, "green", "simple", "description "],
+    ["Essen und Trinken in deutschsprachigen Ländern", 4452, 3885, "green", "simple", "description "],
+    ["Experience the culture of the United Kingdom", 3982, 3715, "green", "simple", "description "],
+    ["Francie všemi smysly", 3522, 3541, "green", "simple", "description "],
+    ["Stroj času", 2812, 3267, "green", "simple", "description "],
+    ["Laboratoř neurovědy", 2417, 3139, "green", "simple", "description "],
+    ["Kvízy a hry", 1985, 2707, "green", "simple", "description "],
+    ["Svět východních Slovanů", 4376, 4970, "green", "simple", "description "],
+    ["Výstava techniky", 3568, 4737, "purple", "simple", "description "],
+    ["Hudební hry", 4090, 5564, "green", "simple", "description "],
+    ["Brodské pověsti", 3906, 5519, "green", "simple", "description "],
+    ["Umění", 2308, 5101, "green", "simple", "description "],
+    ["Začátek 2063", 4602, 2292, "red", "custom", "na informační tabuli zjestěte ____ atd."],
+    ["Konec 2063", 3836, 5396, "red", "custom", "Tady dostaneš za svoje body odměnu a zapíšeš se do celkového žebříčku."],
+    ["Mikroskop", 1642, 4881, "green", "simple", "description "],
+    //přijímačky nanečisto
+    ["Přijímačky na nečisto", 4636, 5040, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 3232, 4656, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 2752, 4504, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 2068, 4268, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 3232, 4656, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 1740, 4176, "yellow", "simple", "description "],
+    ["Přijímačky na nečisto", 1296, 3836, "yellow", "simple", "description "],
+                
+                ];
+
+    points = [];
+
+    
+    for (let i = 0; i < pointsArr.length; i++) {
+      const newpoint = {
+        id: i,
+        name: pointsArr[i][0],
+        x: pointsArr[i][1],
+        y: pointsArr[i][2],
+        icon: pointsArr[i][3],
+        type: pointsArr[i][4],
+        description: pointsArr[i][5]
+      };
+
+      points.push(newpoint);
+    }
+
+    console.log(points);
+
+    points.forEach(addPoints);
+
+    function addPoints(p) {
+      console.log();
+      if (p.type == "simple") {
+        // console.log("ahahahhahhahahaa  " + p.icon + "green");
+        const coords = xy(p.x, p.y);
+
+        if (p.icon == "green") {
+          L.marker(coords, {icon: green}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else if (p.icon == "purple") {
+          L.marker(coords, {icon: purple}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else if (p.icon == "pink") {
+          L.marker(coords, {icon: pink}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else if (p.icon == "red") {
+          L.marker(coords, {icon: red}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else if (p.icon == "yellow") {
+          L.marker(coords, {icon: yellow}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else {
+          L.marker(coords, {icon: yellow}).addTo(map).bindPopup(p.id + ": " + p.name);
+        }
+      } else if (p.type == "custom") {
+        const coords = xy(p.x, p.y);
+        if (p.icon == "blue") {
+          L.marker(coords, {icon: blue}).addTo(map).bindPopup(createCustomPopup(p.name, p.description));
+        } else if (p.icon == "red") {
+            L.marker(coords, {icon: red}).addTo(map).bindPopup(p.id + ": " + p.name);
+        } else {
+          L.marker(coords, {icon: red}).addTo(map).bindPopup(createCustomPopup(p.name, p.description));
+        }
+      }
+    }
+
+    // Function to create a custom popup with a button
+    function createCustomPopup(title, description) {
+      const container = L.DomUtil.create('div');
+      container.innerHTML = `
+          <h3>${title}</h3>
+          <p>${description}</p>
+          <button onclick="showAnswerModal()">Otevřít okno pro zadání odpovědi</button>
+      `;
+      return container;
+    }
+
+    map.setView(xy(4433, 2229), -2);
+
+    // Create a text field to display coordinates
+    // const coordsField = document.getElementById('coords');
+    // coordsField.value = '';
+    coordList = [];
+    // Event listener to capture map coordinates when CTRL key is pressed
+    map.on('click', function (e) {
+      if (e.originalEvent.ctrlKey) {
+        const coords = e.latlng; // Map coordinates
+
+        // coordsField.value = `${Math.round(coords.lng)}, ${Math.round(coords.lat)}`;
+        console.log(`${Math.round(coords.lng)}, ${Math.round(coords.lat)}`)
+        const current = xy(Math.round(coords.lng), Math.round(coords.lat));
+        const mCurrent = L.marker(current).addTo(map).bindPopup('current');
+        //add coords to the coordList
+        // coordList.push([Math.round(coords.lng), Math.round(coords.lat)]);
+        // console.log(coordList);
+      }
+    });
+
+    //ahoj, test1, banán35, autobus9, ghb01
+    // const answers = ["97104111106", "11610111511649", "98971102251105153", "971171161119811711557", "103104984849"];
+
+    const answers = [
+      "7810111711497108",
+      "80117108115101",
+      "76101110115101115",
+      "76105103104116",
+      "8312111010111511610410111510597",
+      "67111111107105110103",
+      "8010111011697107105108108",
+      "80111100",
+      "69110101114103121",
+      "801089711510997",
+      "8399117108112116117114101",
+      "7311010610199116111114",
+      "66105111109101",
+      "86111105100",
+      "7110111010111610599",
+      "7111410111097100101",
+      "6610897100101",
+      "829799105110103",
+      "83101110115111114",
+      "669711010097103101115",
+      "679710911111710210897103101",
+      "6610511110910111611410599",
+      "68117115116",
+      "78105103104116",
+      "6711111510910111610599",
+      "6910810199116114111",
+      "7710110010599105110101",
+      "7210112099111114101",
+      "671111091091171101059997116111114",
+      "789711011198111116115",
+      "86105115105111110",
+      "70105116110101115115841149799107101114",
+      "721111081111031149711210410599",
+      "8311711411810511897108105115116",
+      "68101109979910597",
+      "731101161011141029799101",
+      "78101117114111",
+      "87114105115116",
+      "77105120111108111103121",
+      "87105108100101114110101115115",
+      "7811110997100",
+      "90105103103115",
+      "8311610197108116104",
+      "65117103109101110116101100",
+      "671219810111410210897114101",
+      "761119910711210599107105110103",
+      "8311711411810511897108",
+      "69120112101100105116105111110",
+      "8997115117111",
+      "771111001051021059997116105111110",
+      "8210197108105116121",
+      "73109109101114115105111110",
+      "7711198105108101",
+      "6711497102116105110103",
+      "8410111411497105110",
+      "89111114100108101",
+      "73100101110116105116121",
+      "67108111116104105110103",
+      "6711711411410111099121",
+      "7711711510599",
+      "6912011210811111497116105111110",
+      "65100118101110116117114101",
+      "721011209810897100101",
+      "7010511410111997108108",
+      "72111108111115107105110",
+      "8797108108101116",
+      "6711111099101114116",
+      "83104101108116101114",
+      "839997118101110103105110103",
+      "9097117110105116101",
+      "749799107",
+      "709799101",
+      "851099811410110810897",
+      "661051111049799107101100",
+      "8210111511111711499101115",
+      "67108105102102115",
+      "74105110120101100",
+      "6710811197107",
+      "8111797110116117109",
+      "83111108971144580111119101114101100",
+      "691081019911611410599",
+      "72117110103101114",
+      "8297105100115",
+      "8610510711611111410597110",
+      "83101114117109",
+      "76105118105110103",
+      "68105115116111114116105111110",
+      "869711210180101110",
+      "84104105114115116",
+      "8410411410197116115",
+      "651149997110101",
+      "7797115107",
+      "80111107101114",
+      "65109112108105102105101114",
+      "8011199107101116879711699104",
+      "6797109112102105114101",
+      "6697115101",
+      "781011111109810897100101",
+      "7310911210897110116",
+      "75101121",
+      "6911011697110103108101109101110116",
+      "71971157111410111097100101",
+      "6697991071129799107",
+      "691109997109112109101110116",
+      "8011411110610199116101100",
+      "721111181011149811197114100",
+      "83107971161019811197114100",
+      "821011151111109711099101",
+      "68971109910170108111111114",
+      "72117110116105110103",
+      "72111115116105108101",
+      "8611110510098111114110",
+      "7110111010111497116111114",
+      "8010897110116",
+      "699711411210510199101",
+      "69115999711210182111111109",
+      "7197116104101114105110103",
+      "80105108116111118101114",
+      "679710911110210897103101",
+      "831179810010111410997108",
+      "789711011111610199104",
+      "8312111011610411997118101",
+      "831111171101001161149799107",
+      "84111111108115",
+      "9097117110",
+      "661081051161229911497110107",
+      "661149710511011997118101",
+      "8210111297105114",
+      "78971101111099799104105110101",
+      "6511611110910599",
+      "6797109112115105116101",
+      "7210112011610199104",
+      "749712199101",
+      "6712198101114112117110107",
+      "75105116",
+      "7197109105110103",
+      "77111111110115104105110101",
+      "789711810510397116105111110",
+      "83117109109111110101114",
+      "78101111110102108117120",
+      "729711211610599",
+      "65110116105457111497118105116121",
+      "6710497105114",
+      "6610511111010599",
+      "7797112",
+      "78101120117115",
+      "90101112104121114",
+      "661051111049799107105110103",
+      "66117108108101116115",
+      "83116114101101116",
+      "71971157797115107",
+      "6711110911297115115",
+      "74105110120",
+      "791141059711011097",
+      "766968",
+      "831171141181011051081089711099101",
+      "70111111100",
+      "6812111511611111210597110",
+      "8311097114101115",
+      "86105107116111114",
+      "8210510211611997108107101114",
+      "6911099114121112116105111110",
+      "87104105112",
+      "83121110116104101115105122101114",
+      "6810199111100101114",
+      "8411497112115",
+      "69107107111",
+      "8310511010311710897114105116121",
+      "7097115104105111110",
+      "66111111116115",
+      "8610511411611797108",
+      "879711511610110897110100",
+      "87105108100108105102101",
+      "80117108115101102105114101",
+      "759710511597",
+      "831169798105108105122101114115",
+      "7111497112112108105110103",
+      "65114116",
+      "69120111115107101108101116111110",
+      "7011111497103105110103",
+      "841019910411011110997103101",
+      "6712198101114103108111119",
+      "789711011199104105112115",
+      "771051101004567111110116114111108108101100",
+      "7197108108101114121",
+      "80108971151099783104105101108100",
+      "661171151049911497102116",
+      "75476865",
+      "77971081229710497114",
+      "8497116116111111115",
+      "72111118101114",
+      "671219810111411010111610599",
+      "85110100101114103114111117110100",
+      "7297114118101115116105110103",
+      "8011411110610199116",
+      "7797108112104105116101",
+      "6810111810599101",
+      "68114111110101",
+      "77971141161059710865114116115",
+      "65110100114111105100",
+      "831169710910511097",
+      "67121981011149810897100101",
+      "74104105110",
+      "839997110110101114",
+      "8311997114109",
+      "8411497105110105110103",
+      "7297114109111110121",
+      "7010511410111511697114116101114",
+      "771019910497",
+      "8312111010011497",
+      "7110897115115101115",
+      "7311011510199116",
+      "8011411110311497109",
+      "67104101109105115116",
+      "8297102116",
+      "6710410110911610199104",
+      "76117120",
+      "6610511145691101049711099101100",
+      "671111101169799116",
+      "78101111110",
+      "771011091111141216610897100101",
+      "70105115104105110103",
+      "7211110811110311497112104",
+      "86105"
+    ]
+
+
+
+
+
+  </script>
+
+
+
+</body>
+
+</html>
